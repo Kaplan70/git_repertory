@@ -1,9 +1,5 @@
 #include <stdio.h>
 
-struct coordinate {
-    int x, y;
-};
-
 int maze [5][5] = {
     0, 1, 0, 0, 0,
     0, 1, 0, 1, 0,
@@ -12,7 +8,12 @@ int maze [5][5] = {
     0, 0, 0, 1, 0
 };
 
+
+struct coordinate {
+    int x, y, exist;
+};
 struct coordinate path[25];
+struct coordinate excur[4] = {[0] = {.x = -1, }, [1] = {.y = -1, }, [2] = {.x = 1, }, [3] = {.y = 1, }};
 
 int top = 0;
 
@@ -31,64 +32,46 @@ int is_empt(void)
     return top == 0;
 }
 
-struct coordinate exist[25];
 
-int top_e = 0;
 
-void push_exist(struct coordinate coor)
+struct coordinate excursion_coor(struct coordinate coor, int excur_x, int excur_y, int able_exist)
 {
-    exist[top_e++] = coor;
+    struct coordinate excur_coor;
+    if(coor.x + excur_x >= 0 && coor.x + excur_x <= 4 && coor.y + excur_y >=0 && coor.y + excur_y <= 4) {
+        excur_coor.x = coor.x + excur_x;
+        excur_coor.y = coor.y + excur_y;
+        excur_coor.exist = able_exist;
+    }
+    else {
+        excur_coor.x = -1;
+        excur_coor.y = -1;
+        excur_coor.exist = 0; 
+    } 
+
+    return excur_coor;
 }
 
-int is_exist(struct coordinate pox)
-{
-    int i;
-    for (i = 0; i < 25; i++) if (pox.x == exist[i].x && pox.y == exist[i].y) return 1;
-    return 0;
-}
-
-
-struct coordinate com_coor(int x, int y)
-{
-    struct coordinate c;
-    c.x = x;
-    c.y = y;
-    return c;
-}
 
 int main(void)
 {
-    struct coordinate init_pox = {0, 0}, judge_pox;
+    struct coordinate init_pox = {0, 0, 1}, judge_pox;
     push(init_pox);
-    push_exist(init_pox);
 
     while (!is_empt()) {
         judge_pox = pop();
         if (judge_pox.x == 4 && judge_pox.y == 4) break;
         else {
-            if (maze[judge_pox.x - 1][judge_pox.y] == 0 && !is_exist(com_coor(judge_pox.x - 1, judge_pox.y)) && judge_pox.x - 1 >= 0 && judge_pox.x - 1 <= 4) {
-                push(com_coor(judge_pox.x, judge_pox.y));  
-                push(com_coor(judge_pox.x - 1, judge_pox.y)); 
-                push_exist(com_coor(judge_pox.x - 1, judge_pox.y));
-                continue;
-            }
-            if (maze[judge_pox.x][judge_pox.y - 1] == 0 && !is_exist(com_coor(judge_pox.x, judge_pox.y - 1)) && judge_pox.y - 1 >= 0 && judge_pox.y - 1 <= 4) {
-                push(com_coor(judge_pox.x, judge_pox.y));  
-                push(com_coor(judge_pox.x, judge_pox.y - 1)); 
-                push_exist(com_coor(judge_pox.x, judge_pox.y - 1));
-                continue;
-            }
-            if (maze[judge_pox.x + 1][judge_pox.y] == 0 && !is_exist(com_coor(judge_pox.x + 1, judge_pox.y)) && judge_pox.x + 1 >= 0 && judge_pox.x + 1 <= 4) {
-                push(com_coor(judge_pox.x, judge_pox.y));  
-                push(com_coor(judge_pox.x + 1, judge_pox.y)); 
-                push_exist(com_coor(judge_pox.x + 1, judge_pox.y));
-                continue;
-            }
-            if (maze[judge_pox.x][judge_pox.y + 1] == 0 && !is_exist(com_coor(judge_pox.x, judge_pox.y + 1)) && judge_pox.y + 1 >= 0 && judge_pox.y + 1 <= 4) {
-                push(com_coor(judge_pox.x, judge_pox.y));  
-                push(com_coor(judge_pox.x, judge_pox.y + 1)); 
-                push_exist(com_coor(judge_pox.x, judge_pox.y + 1));
-                continue;
+            int i;
+            for (i = 0; i < 4; i++) {
+                struct coordinate excur_judge_pox = excursion_coor(judge_pox, excur[i].x, excur[i].y, 0);
+                if(!(excur_judge_pox.x == -1) && 
+                        maze[excur_judge_pox.x][excur_judge_pox.y] == 0 && 
+                        excur_judge_pox.exist == 0) {
+                    push(judge_pox);
+                    excur_judge_pox.exist = 1;
+                    push(excur_judge_pox);
+                    break;
+                }
             }
         }
     }
@@ -97,19 +80,4 @@ int main(void)
 
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
